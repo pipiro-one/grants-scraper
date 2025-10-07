@@ -1,13 +1,12 @@
-name: Grants Auto Batch
+name: Grants Scraper Full Run
 
 on:
-  schedule:
-    - cron: '0 21 * * *'  # JST 6:00 実行（UTC 21時）
-  workflow_dispatch:  # 手動でも実行可
+  workflow_dispatch:
 
 jobs:
-  run-batch:
+  run-scraper:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
 
     steps:
       - name: 📥 Checkout repository
@@ -21,11 +20,11 @@ jobs:
       - name: 📦 Install dependencies
         run: pip install -r requirements.txt
 
-      - name: 🚀 Run grants pipeline
+      - name: 🚀 Run scraper pipeline
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          echo "Start Grants Auto Batch..."
+          echo "Start Grants Scraper..."
           python crawl_list.py
           python extract_batch.py
           python dedupe_details.py
@@ -37,6 +36,6 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add details_store.csv list_store.csv public_store.csv || true
-          git commit -m "Auto update grants data (daily batch)" || echo "No changes to commit"
+          git add details_store.csv public_store.csv || true
+          git commit -m "Auto-update scraped grants (manual run)" || echo "No changes to commit"
           git push || echo "Nothing to push"
