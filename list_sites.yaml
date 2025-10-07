@@ -1,0 +1,12 @@
+- site_key: hachikomi
+  site_name: はちコミねっと
+  list_selector: "ul.p-notice__list li a.p-notice__listLink"
+
+  # ページネーションがある場合は次のセレクタを追加（必要に応じて）
+  # next_selector: "a[rel='next']"
+
+- site_key: canpan
+  site_name: CANPAN助成情報
+  # 各行の詳細ページへのリンク（壊れにくいセレクタ）
+  list_selector: "#search-results table h3 a"
+  # next_selector は未指定でOK（あなたの find_next_url のフォールバックが「次へ」を拾う）

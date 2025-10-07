@@ -1,0 +1,40 @@
+name: Grants Scraper Manual Run
+
+on:
+  workflow_dispatch:  # ← 手動実行モード（「Run workflow」ボタンで実行）
+
+jobs:
+  run-scraper:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 📦 Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: 🚀 Run scraper pipeline
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          echo "Start Grants Scraper..."
+          python crawl_list.py
+          python extract_batch.py
+          python dedupe_details.py
+          python rewrite_gemini.py
+          python classify_category.py
+          python generate_public.py
+
+      - name: 💾 Commit and push updated data
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add details_store.csv public_store.csv || true
+          git commit -m "Auto-update scraped grants (manual run)" || echo "No changes to commit"
+          git push || echo "Nothing to push"

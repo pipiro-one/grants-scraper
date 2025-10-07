@@ -1,0 +1,36 @@
+- site_key: hachikomi
+  site_name: はちコミねっと
+
+  title_selector: "h1.c-recruitArticle__title"
+  row_selector: "div.c-recruitArticle__tableItem"
+  label_selector: "div.c-recruitArticle__tableLabel"
+  value_selector: "div.c-recruitArticle__tableField"
+
+  label_map:
+    募集期間: period
+    助成対象: summary
+    外部リンク: source_url
+    実施団体: fund_name
+
+  range_separators: ["～", "〜", "-", "から", "~"]
+
+
+- site_key: canpan
+  site_name: CANPAN助成情報
+
+  title_selector: "#detail > table > tbody > tr.first > td.first > div"
+  row_selector: "#detail > table > tbody > tr"
+  label_selector: "td.h"
+  value_selector: "td:nth-child(2) > div"
+
+  label_map:
+    実施団体: fund_name
+    関連URL: source_url
+    募集時期: period
+    募集期間: period
+    内容／対象: summary
+    応募制限: summary
+    助成金額: amount
+
+  range_separators: ["～", "〜", "-", "から", "~"]
+
