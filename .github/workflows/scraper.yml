@@ -1,11 +1,12 @@
 name: Grants Scraper Manual Run
 
 on:
-  workflow_dispatch:  # 手動実行（Run workflowボタンで実行）
+  workflow_dispatch:  # 手動実行
 
 jobs:
   run-scraper:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
 
     steps:
       - name: 📥 Checkout repository
@@ -19,26 +20,28 @@ jobs:
       - name: 📦 Install dependencies
         run: pip install -r requirements.txt
 
-      # 👇 ここは再処理を避けるためにコメントアウト済み
-      - name: 🚀 Skip scraper pipeline (AI再実行なし)
-        run: echo "Skipping long-running AI tasks. Only collecting CSV outputs."
+      - name: 🚀 Run scraper pipeline
+        working-directory: ./  # ← ここを明示
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          echo "Start Grants Scraper..."
+          ls -la  # デバッグ用：実際の作業ディレクトリを確認
+          pwd     # デバッグ用：作業ディレクトリパスを表示
+          python crawl_list.py
+          python extract_batch.py
+          python dedupe_details.py
+          python rewrite_gemini.py
+          python classify_category.py
+          python generate_public.py
 
-      # ✅ 生成済みCSVをArtifactsとして保存
-      - name: 📦 Upload generated CSVs
-        uses: actions/upload-artifact@v4
-        with:
-          name: grants-scraper-results
-          path: |
-            details_store.csv
-            public_store.csv
-            rewrite_errors.log
-            details_store_backup.csv
-
-      # ✅ GitHubにもCSVをコミット（必要なら残す）
       - name: 💾 Commit and push updated data
+        working-directory: ./  # ← 明示的に追加
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add -A
-          git commit -m "Upload generated CSVs (manual save)" || echo "No changes to commit"
-          git push || echo "Nothing to push"
+          git add details_store.csv public_store.csv || true
+          git commit -m "Auto-update scraped grants (manual run)" || echo "No changes to commit"
+          git push origin main || echo "Nothing to push"
