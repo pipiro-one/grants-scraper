@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Japan Grants Finder（β）</title>
+  <style>
+    body { font-family: "Noto Sans JP", sans-serif; margin: 0; padding: 0; background: #fafafa; color: #222; }
+    header { background: #004aad; color: white; padding: 1rem 2rem; }
+    header h1 { margin: 0; font-size: 1.5rem; }
+    main { max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
+    .search-area { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
+    input, select, button { padding: 0.6rem; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; }
+    button { background: #004aad; color: white; cursor: pointer; }
+    button:hover { background: #0060d4; }
+    .card { background: white; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1rem; margin-bottom: 1rem; }
+    .card h3 { margin: 0 0 0.5rem 0; font-size: 1.1rem; color: #004aad; }
+    .meta { font-size: 0.9rem; color: #555; margin-bottom: 0.5rem; }
+    .footer { margin-top: 3rem; padding: 2rem; background: #f1f1f1; font-size: 0.9rem; text-align: center; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Japan Grants Finder（β）</h1>
+  </header>
+
+  <main>
+    <section class="search-area">
+      <input type="text" id="keyword" placeholder="キーワードを入力（例：教育・地域・環境...）" />
+      <select id="category">
+        <option value="">すべてのカテゴリ</option>
+        <option value="教育">教育</option>
+        <option value="地域">地域</option>
+        <option value="環境">環境</option>
+        <option value="福祉">福祉</option>
+      </select>
+      <button id="searchBtn">検索</button>
+    </section>
+
+    <div id="result"></div>
+
+    <div class="footer">
+      <p>本サイトは、日本全国の助成金・補助金情報を自動収集・整形し公開するプロジェクトです。</p>
+      <p>情報は <strong>GitHub Actions</strong> により定期更新されます。最終更新日：<span id="updated-date">読み込み中...</span></p>
+      <p><a href="https://github.com/pipiro-one/grants-scraper" target="_blank">GitHubリポジトリ</a></p>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script>
+    const CSV_URL = "public_store.csv"; // GitHub Actionsで更新されるCSV
+    let grantsData = [];
+
+    // CSV読み込み
+    Papa.parse(CSV_URL, {
+      download: true,
+      header: true,
+      complete: (results) => {
+        grantsData = results.data;
+        displayResults(grantsData);
+        document.getElementById("updated-date").textContent = new Date().toLocaleDateString();
+      }
+    });
+
+    // 検索ボタン押下時
+    document.getElementById("searchBtn").addEventListener("click", () => {
+      const keyword = document.getElementById("keyword").value.trim();
+      const category = document.getElementById("category").value;
+      const filtered = grantsData.filter(row => {
+        const matchKeyword = keyword === "" ||
+          row.title.includes(keyword) ||
+          row.summary.includes(keyword) ||
+          row.fund_name.includes(keyword);
+        const matchCategory = category === "" || row.category1 === category;
+        return matchKeyword && matchCategory;
+      });
+      displayResults(filtered);
+    });
+
+    // 結果表示関数
+    function displayResults(data) {
+      const container = document.getElementById("result");
+      container.innerHTML = "";
+      if (data.length === 0) {
+        container.innerHTML = "<p>該当する助成金は見つかりませんでした。</p>";
+        return;
+      }
+      data.forEach(row => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="meta">🏷️ ${row.category1 || "未分類"} ／ ${row.fund_name || "不明"}</div>
+          <h3>${row.title}</h3>
+          <p>${row.summary || ""}</p>
+          <p>💰 ${row.amount || "金額不明"}　📅 ${row.deadline_date || "締切不明"}</p>
+          <a href="${row.page_url}" target="_blank">🔗 詳細を見る</a>
+        `;
+        container.appendChild(card);
+      });
+    }
+  </script>
+</body>
+</html>
